@@ -10,9 +10,56 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="TRPGLogArrangeTool.Blazor.styles.css" rel="stylesheet" />
+    <style>
+        #debug-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+            z-index: 999999;
+            overflow: auto;
+            display: none;
+            pointer-events: none;
+        }
+    </style>
 </head>
 
 <body>
+    <div id="debug-overlay"></div>
+    <script>
+        (function () {
+            var overlay = document.getElementById('debug-overlay');
+            function log(msg, color) {
+                overlay.style.display = 'block';
+                var div = document.createElement('div');
+                div.style.color = color || '#0f0';
+                div.innerText = msg;
+                overlay.appendChild(div);
+            }
+            window.onerror = function (msg, url, line, col, error) {
+                log('ERR: ' + msg + '\nAt: ' + url + ':' + line + ':' + col, 'red');
+            };
+            window.addEventListener('unhandledrejection', function (event) {
+                log('PROMISE REJ: ' + event.reason, 'orange');
+            });
+            var oldLog = console.log;
+            console.log = function () {
+                log('LOG: ' + Array.from(arguments).join(' '));
+                oldLog.apply(console, arguments);
+            };
+            var oldErr = console.error;
+            console.error = function () {
+                log('CONSOLE ERR: ' + Array.from(arguments).join(' '), 'red');
+                oldErr.apply(console, arguments);
+            };
+        })();
+    </script>
+
     <div id="app">
         <svg class="loading-progress">
             <circle r="40%" cx="50%" cy="50%" />
