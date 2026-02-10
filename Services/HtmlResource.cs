@@ -99,20 +99,6 @@ width: 100%;
   display: block;
   margin: 12px auto;
 }
-/* 画像部 */
-.chatImage{
- margin: 10px;
-}
-.chatImage_Icon{
- margin: 10px;
-}
-/* 文字サイズ部 */
-.chatinfo{
- font-size: 75%;
-}
-.chatOneLine{
- border-bottom: 0px;
-}
 ";
 
         public const string ImageData = @"background-image: url(data:image/png;base64,{0});";
