@@ -4,12 +4,36 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TRPGLogArrangeWebApp</title>
+    <title>TRPGLogArrangeTool.Blazor</title>
     <base href="/TRPGLogArrangeWebApp/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <script>
+        var path = window.location.pathname.split('/');
+        var base = document.getElementsByTagName('base')[0];
+        if (window.location.hostname.includes('github.io')) {
+            base.href = '/' + path[1] + '/';
+        }
+    </script>
+    
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="TRPGLogArrangeWebApp.styles.css" rel="stylesheet" />
+    <link href="TRPGLogArrangeTool.Blazor.styles.css" rel="stylesheet" />
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.yiodnjoszm.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.xidrk0eo52.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.hv7sykez1z.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.js": "sha256-lh8bY3DINgTiqGL/cwOeVaJGdfE2ex1o8MzwCbmlZZE=",
+    "./_framework/blazor.webassembly.yiodnjoszm.js": "sha256-lh8bY3DINgTiqGL/cwOeVaJGdfE2ex1o8MzwCbmlZZE=",
+    "./_framework/dotnet.native.js": "sha256-OfGprhDb4vgzxzOBj9RRMcRnAdSZR0hH5g5LHA0MzIE=",
+    "./_framework/dotnet.native.xidrk0eo52.js": "sha256-OfGprhDb4vgzxzOBj9RRMcRnAdSZR0hH5g5LHA0MzIE=",
+    "./_framework/dotnet.runtime.hv7sykez1z.js": "sha256-3egSZfVHFUpXw3QwgiaxDQns5wWmrugiXEFPbJyCk2g=",
+    "./_framework/dotnet.runtime.js": "sha256-3egSZfVHFUpXw3QwgiaxDQns5wWmrugiXEFPbJyCk2g="
+  }
+}</script>
 </head>
 
 <body>
@@ -23,11 +47,22 @@
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
     </div>
-    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
-    <script src="brotliloader.min.js" type="module"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.BlazorDownloadFile = (fileName, contentType, content) => {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+            URL.revokeObjectURL(url);
+        }
+    </script>
 </body>
 
 </html>
