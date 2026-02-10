@@ -4,90 +4,40 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TRPGLogArrangeTool.Blazor (v2 DEBUG)</title>
+    <title>TRPGLogArrangeTool (v3)</title>
     <base href="/TRPGLogArrangeWebApp/" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="TRPGLogArrangeTool.Blazor.styles.css" rel="stylesheet" />
-    <style>
-        #debug-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            color: #0f0;
-            font-family: monospace;
-            padding: 20px;
-            z-index: 999999;
-            overflow: auto;
-            display: none;
-            pointer-events: none;
-        }
-    </style>
 </head>
 
 <body>
-    <div id="debug-overlay"></div>
-    <script>
-        (function () {
-            var overlay = document.getElementById('debug-overlay');
-            function log(msg, color) {
-                overlay.style.display = 'block';
-                var div = document.createElement('div');
-                div.style.color = color || '#0f0';
-                div.innerText = msg;
-                overlay.appendChild(div);
-            }
-            window.onerror = function (msg, url, line, col, error) {
-                log('ERR: ' + msg + '\nAt: ' + url + ':' + line + ':' + col, 'red');
-            };
-            window.addEventListener('unhandledrejection', function (event) {
-                log('PROMISE REJ: ' + event.reason, 'orange');
-            });
-            var oldLog = console.log;
-            console.log = function () {
-                log('LOG: ' + Array.from(arguments).join(' '));
-                oldLog.apply(console, arguments);
-            };
-            var oldErr = console.error;
-            console.error = function () {
-                log('CONSOLE ERR: ' + Array.from(arguments).join(' '), 'red');
-                oldErr.apply(console, arguments);
-            };
-        })();
-    </script>
-
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div style="padding:20px; text-align:center;">
+            <h3>Loading...</h3>
+            <div id="status-debug" style="color:gray; font-size:0.8em;">Waiting for Blazor...</div>
+        </div>
     </div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+    <div id="blazor-error-ui"
+        style="display:none; position:fixed; bottom:0; width:100%; background:yellow; color:black; padding:10px; z-index:1000;">
+        An error occurred. <a href="." class="reload">Reload</a>
     </div>
+
+    <script>
+        // Emergency logging
+        window.onclick = function () { document.getElementById('status-debug').innerText = 'Starting...'; };
+
+        window.onerror = function (msg, url, line) {
+            var div = document.createElement('div');
+            div.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;z-index:9999;padding:10px;width:100%;word-break:break-all;';
+            div.innerText = 'JS ERR: ' + msg + '\nAt: ' + url + ':' + line;
+            document.body.appendChild(div);
+        };
+    </script>
 
     <script src="_framework/blazor.webassembly.js"></script>
-
-    <script>
-        window.BlazorDownloadFile = (fileName, contentType, content) => {
-            const blob = new Blob([content], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            const anchorElement = document.createElement('a');
-            anchorElement.href = url;
-            anchorElement.download = fileName ?? '';
-            anchorElement.click();
-            anchorElement.remove();
-            URL.revokeObjectURL(url);
-        }
-    </script>
 </body>
 
 </html>
