@@ -113,3 +113,7 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.bg-light-gray {
+    background-color: #f0f0f0;
+}
