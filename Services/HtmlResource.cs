@@ -98,6 +98,9 @@ color: #FFFFFF;
 .chatOneLine{
  border-bottom: 0px;
 }
+.chatTextArea .namearea{
+ font-weight: bold;
+}
 ";
 
         public const string ImageData = @"background-image: url(data:image/png;base64,{0});";
