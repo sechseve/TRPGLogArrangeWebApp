@@ -46,13 +46,13 @@ span{{
         <title></title>
 <style>
 .icon {
- width: 80px;
- height: 80px;
- margin: 10px;
- background-image: url(""icon.png"");
- background-repeat: no-repeat;
- background-position: center;
- background-size: contain;
+  width: 80px;
+  height: 80px;
+  margin: 10px;
+  background-image: url(""icon.png"");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 .chat {
 background-color: #F8F8F8;
@@ -68,38 +68,51 @@ text-align: right;
 background-color: #CCCCCC;
  flex-direction: row-reverse;
 }
-.chat.secretChat {
+.chatTextArea {
+display: inline-block;
+flex: 1;
+vertical-align: top;
+padding: 10px 15px;
+word-break: break-all;
+white-space: normal;
+}
+.chatTextArea .namearea{
+font-weight: bold;
+}
+.chat.secretChat{
 text-align: right;
-background-color: #333333;
-color: #FFFFFF;
+background-color: #FA8072;
  flex-direction: row-reverse;
+}
+.width100{
+width: 100%;
 }
 /* タブ */
 .chatinfo{
  font-size: 75%;
 }
-.chatTextArea{
- width: 100%;
- margin: 10px;
-}
 .chatImage{
  margin: 10px;
 }
-.chatImage img{
- max-width: 600px;
+.chatImage img {
+  max-width: 70%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: block;
+  margin: 12px auto;
 }
 .chatImage_Icon{
  margin: 10px;
 }
-.chatImage_Icon img{
- max-width: 100px;
- max-height: 100px;
+.chatImage_Icon img {
+  max-width: 20%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: block;
+  margin: 12px auto;
 }
 .chatOneLine{
  border-bottom: 0px;
-}
-.chatTextArea .namearea{
- font-weight: bold;
 }
 ";
 
