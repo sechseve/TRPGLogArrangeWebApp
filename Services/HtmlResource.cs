@@ -85,13 +85,6 @@ background-color: #FA8072;
 .width100{
 width: 100%;
 }
-/* タブ */
-.chatinfo{
- font-size: 75%;
-}
-.chatImage{
- margin: 10px;
-}
 .chatImage img {
   max-width: 70%;
   border: 1px solid #ccc;
@@ -99,15 +92,23 @@ width: 100%;
   display: block;
   margin: 12px auto;
 }
-.chatImage_Icon{
- margin: 10px;
-}
 .chatImage_Icon img {
   max-width: 20%;
   border: 1px solid #ccc;
   border-radius: 8px;
   display: block;
   margin: 12px auto;
+}
+/* 画像部 */
+.chatImage{
+ margin: 10px;
+}
+.chatImage_Icon{
+ margin: 10px;
+}
+/* 文字サイズ部 */
+.chatinfo{
+ font-size: 75%;
 }
 .chatOneLine{
  border-bottom: 0px;
