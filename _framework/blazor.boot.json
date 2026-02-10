@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TRPGLogArrangeTool.Blazor",
   "resources": {
-    "hash": "sha256-Q1x2Focg4vQgg+MUrT6oQ9roeZA/z+96t3jHR3na9Pc=",
+    "hash": "sha256-zxMqEAKDBp3GgWsdMto2c0g5gKmNnuCIR11WyI+xERI=",
     "fingerprinting": {
       "HtmlAgilityPack.sp3ymqxbys.wasm": "HtmlAgilityPack.wasm",
       "Microsoft.AspNetCore.Components.ohhjwaprci.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -56,7 +56,7 @@
       "System.7mkjnfwul0.wasm": "System.wasm",
       "netstandard.n9gdef1oq4.wasm": "netstandard.wasm",
       "System.Private.CoreLib.tq3mksj3az.wasm": "System.Private.CoreLib.wasm",
-      "TRPGLogArrangeTool.Blazor.5y414z5jo1.wasm": "TRPGLogArrangeTool.Blazor.wasm",
+      "TRPGLogArrangeTool.Blazor.wqj1pe2r0e.wasm": "TRPGLogArrangeTool.Blazor.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.xidrk0eo52.js": "dotnet.native.js",
       "dotnet.native.y68cfu4kuf.wasm": "dotnet.native.wasm",
@@ -135,7 +135,7 @@
       "System.Xml.XDocument.oa5jx4s5pa.wasm": "sha256-cA2c7uiPl7rVnIDEliB8EK9V1Dnsr6mQ9cytqwdbO1Y=",
       "System.7mkjnfwul0.wasm": "sha256-H4K9w0OHWwZCaMDfVwQjW0dSqnnS/iuCkysBB+Q2c3A=",
       "netstandard.n9gdef1oq4.wasm": "sha256-ZfJAlb+UXICuVHtf5jyYztJaJC9h0nA+2t/fQ0KFlzU=",
-      "TRPGLogArrangeTool.Blazor.5y414z5jo1.wasm": "sha256-szDeArr7dICa5mWrRfLwQumMY6+U4ekkKdhB7Ar48j8="
+      "TRPGLogArrangeTool.Blazor.wqj1pe2r0e.wasm": "sha256-yFRyBv7QOZneWu8Jbj8ElOEOkwxL7XVMzH3EVrsBgZE="
     }
   },
   "debugLevel": 0,
