@@ -1,5 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Error reporting script for debugging -->
+<script>
+    window.addEventListener('error', function (event) {
+        var msg = event.message || "Unknown Error";
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed; top:0; left:0; background:red; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+        div.innerText = "Global Error: " + msg + "\nAt: " + event.filename + ":" + event.lineno;
+        document.body.appendChild(div);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed; top:50px; left:0; background:darkred; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+        div.innerText = "Unhandled Promise Rejection: " + event.reason;
+        document.body.appendChild(div);
+    });
+</script>
 
 <head>
     <meta charset="utf-8" />
