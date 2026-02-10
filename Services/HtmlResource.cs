@@ -66,7 +66,6 @@ text-decoration: none;
 .chat.right {
 text-align: right;
 background-color: #CCCCCC;
- flex-direction: row-reverse;
 }
 .chatTextArea {
 display: inline-block;
@@ -82,7 +81,6 @@ font-weight: bold;
 .chat.secretChat{
 text-align: right;
 background-color: #FA8072;
- flex-direction: row-reverse;
 }
 .width100{
 width: 100%;
