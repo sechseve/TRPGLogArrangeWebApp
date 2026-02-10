@@ -1,0 +1,229 @@
+@page "/"
+@inject LogArrangeService LogService
+@inject ImageService ImageService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>TRPG Log Arrange Tool</PageTitle>
+
+<div class="container">
+    <h1 class="my-4">TRPG Log Arrange Tool</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            ログ読み込み (HTML or Zip)
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <InputFile OnChange="@HandleFileSelected" class="form-control" accept=".html,.zip" />
+                @if (selectedFile != null)
+                {
+                    <div class="mt-2 text-muted">選択中: @selectedFile.Name (@(selectedFile.Size / 1024) KB)</div>
+                    @if (selectedFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <div class="mt-2">
+                            <label class="form-check-label">
+                                <input type="checkbox" @bind="detailAnalysis" class="form-check-input me-2" />
+                                詳細解析 (ZIP 読み込み時に立ち絵情報を反映する)
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+            <button class="btn btn-success w-100" @onclick="ExecuteAnalysis" disabled="@(selectedFile == null || isAnalyzing)">
+                @(isAnalyzing ? "解析中..." : "解析実行")
+            </button>
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="alert @statusClass mt-3">@statusMessage</div>
+            }
+        </div>
+    </div>
+
+    @if (lastAnalyzedFileType == "HTML" && LogService.ChatNameList.Any(x => x.Name != "EVENT_IMAGE" && x.Name != "EVENT_CHARACTER_IMAGE"))
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                キャラクター画像設定 (HTML読み込み用)
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var character in LogService.ChatNameList.Where(x => x.Name != "EVENT_IMAGE" && x.Name != "EVENT_CHARACTER_IMAGE"))
+                {
+                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(character.DefaultImageKey))
+                            {
+                                var base64 = ImageService.GetBase64ByKey(character.DefaultImageKey);
+                                if (!string.IsNullOrEmpty(base64))
+                                {
+                                    <img src="data:image/png;base64,@base64" style="width: 40px; height: 40px; object-fit: contain; margin-right: 10px; border: 1px solid #ddd;" />
+                                }
+                            }
+                            <span>@character.Name</span>
+                        </div>
+                        <div style="width: 250px;">
+                            <InputFile OnChange="@(e => HandleCharacterImageSelected(e, character))" class="form-control form-control-sm" accept=".png,.jpg,.jpeg" />
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (LogService.ChatMessageList.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3>プレビュー (全 @LogService.ChatMessageList.Count 件)</h3>
+            <button class="btn btn-primary" @onclick="DownloadHtml">
+                変換して保存 (HTML)
+            </button>
+        </div>
+
+        <div class="preview-container border rounded p-3 mb-4" style="height: 500px; overflow-y: scroll;">
+             <Virtualize Items="@LogService.ChatMessageList" Context="msg">
+                 <div class="chat-row mb-2 p-2 border-bottom @(IsMainArea(msg.Area) ? "" : "bg-light-gray")">
+                     <div class="d-flex">
+                         @if (IsMainArea(msg.Area) && !string.IsNullOrEmpty(msg.ImageKey))
+                         {
+                             var base64 = ImageService.GetBase64ByKey(msg.ImageKey);
+                             if (!string.IsNullOrEmpty(base64))
+                             {
+                                 <div class="me-2" style="width: 60px; flex-shrink: 0;">
+                                     <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd;" />
+                                 </div>
+                             }
+                         }
+                         <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
+                             @msg.Name
+                             <div style="font-size: 0.8em; color: gray;">@msg.Area</div>
+                         </div>
+                         <div class="flex-grow-1">
+                             @((MarkupString)msg.Text)
+                         </div>
+                     </div>
+                 </div>
+             </Virtualize>
+        </div>
+    }
+</div>
+
+@code {
+    private string statusMessage;
+    private string statusClass;
+    private bool detailAnalysis = false;
+    private IBrowserFile? selectedFile;
+    private bool isAnalyzing = false;
+    private string lastAnalyzedFileType = string.Empty;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        statusMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task ExecuteAnalysis()
+    {
+        if (selectedFile == null) return;
+
+        isAnalyzing = true;
+        statusMessage = "解析中...";
+        statusClass = "alert-info";
+        StateHasChanged();
+
+        try
+        {
+            LogArrangeResult result;
+            long maxFileSize = 1024 * 1024 * 100; // 100MB
+
+            if (selectedFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                lastAnalyzedFileType = "ZIP";
+                using var stream = selectedFile.OpenReadStream(maxFileSize);
+                result = await LogService.ZipAnalyzeAsync(stream, detailAnalysis, detailAnalysis);
+            }
+            else
+            {
+                lastAnalyzedFileType = "HTML";
+                using var stream = selectedFile.OpenReadStream(maxFileSize);
+                using var reader = new StreamReader(stream);
+                var content = await reader.ReadToEndAsync();
+                result = LogService.HtmlAnalyze(content);
+            }
+
+            if (result.Success)
+            {
+                statusMessage = $"解析成功: {LogService.ChatMessageList.Count} 件のメッセージ";
+                statusClass = "alert-success";
+                if (result.ErrorMessages.Any())
+                {
+                    statusMessage += $" (画像エラー: {result.ErrorMessages.Count} 件)";
+                    statusClass = "alert-warning";
+                }
+            }
+            else
+            {
+                statusMessage = $"エラー: {result.Message}";
+                statusClass = "alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"予期せぬエラー: {ex.Message}";
+            statusClass = "alert-danger";
+        }
+        finally
+        {
+            isAnalyzing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleCharacterImageSelected(InputFileChangeEventArgs e, ChatName character)
+    {
+        try
+        {
+            var file = e.File;
+            long maxFileSize = 1024 * 1024 * 5; // 5MB for icons
+
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            
+            string base64 = Convert.ToBase64String(ms.ToArray());
+            string key = ImageService.GetOrAddFromBase64(base64, out _);
+
+            // Update all related messages
+            var matchingMessages = LogService.ChatMessageList.Where(x => x.Name.Trim() == character.Name.Trim()).ToList();
+            foreach (var msg in matchingMessages)
+            {
+                msg.ImageKey = key;
+            }
+
+            // Update character definition
+            character.DefaultImageKey = key;
+            if (!character.ImageKeys.Contains(key)) character.ImageKeys.Add(key);
+
+            statusMessage = $"{character.Name} の画像を更新しました";
+            statusClass = "alert-success";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"画像読み込みエラー: {ex.Message}";
+            statusClass = "alert-danger";
+        }
+    }
+
+    private async Task DownloadHtml()
+    {
+        var html = LogService.ConvertWrite();
+        var fileName = $"chatLog{DateTime.Now:yyyyMMddHHmmss}.html";
+        var fileContent = System.Text.Encoding.UTF8.GetBytes(html);
+        await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, "text/html", fileContent);
+    }
+
+    private bool IsMainArea(string area)
+    {
+        return area == "メイン" || area == "main" || area == "情報" || area == "info";
+    }
+}

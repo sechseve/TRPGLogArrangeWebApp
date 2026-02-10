@@ -1,0 +1,17 @@
+* text=auto
+
+# Blazor WebAssembly file types
+*.js text
+*.css text
+*.html text
+*.json text
+*.razor text
+*.cs text
+*.csproj text
+
+# Binary files - important for Blazor WASM to prevent line ending conversion
+*.dll binary
+*.pdb binary
+*.wasm binary
+*.dat binary
+*.blat binary

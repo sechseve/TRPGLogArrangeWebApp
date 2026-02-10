@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Error reporting script for debugging -->
+<script>
+    window.addEventListener('error', function (event) {
+        var msg = event.message || "Unknown Error";
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed; top:0; left:0; background:red; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+        div.innerText = "Global Error: " + msg + "\nAt: " + event.filename + ":" + event.lineno;
+        document.body.appendChild(div);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed; top:50px; left:0; background:darkred; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+        div.innerText = "Unhandled Promise Rejection: " + event.reason;
+        document.body.appendChild(div);
+    });
+</script>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRPGLogArrangeTool.Blazor</title>
+    <base href="/" />
+
+    
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="TRPGLogArrangeTool.Blazor.styles.css" rel="stylesheet" />
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.yiodnjoszm.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.noby4tlk4d.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.9o45ky8ejm.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.js": "sha256-lh8bY3DINgTiqGL/cwOeVaJGdfE2ex1o8MzwCbmlZZE=",
+    "./_framework/blazor.webassembly.yiodnjoszm.js": "sha256-lh8bY3DINgTiqGL/cwOeVaJGdfE2ex1o8MzwCbmlZZE=",
+    "./_framework/dotnet.native.js": "sha256-p9eEzXhQIsI0a5bBJhfzW15iRafgplTxT8XrO5FiH9o=",
+    "./_framework/dotnet.native.noby4tlk4d.js": "sha256-p9eEzXhQIsI0a5bBJhfzW15iRafgplTxT8XrO5FiH9o=",
+    "./_framework/dotnet.runtime.9o45ky8ejm.js": "sha256-6QIZYgG+ftoT9N1H1EEJeXIhD/qbKqEcnmawDskiwdI=",
+    "./_framework/dotnet.runtime.js": "sha256-6QIZYgG+ftoT9N1H1EEJeXIhD/qbKqEcnmawDskiwdI="
+  }
+}</script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly.js" autostart="false"
+        onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:100px;left:0;background:red;color:white;z-index:10000;padding:10px;font-weight:bold;';d.innerText='Failed to load blazor.webassembly.js';document.body.appendChild(d);"></script>
+    <script>
+        window.BlazorDownloadFile = (fileName, contentType, content) => {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        // Wait for window load + polling
+        window.addEventListener('load', function () {
+            var retries = 0;
+            var maxRetries = 30; // 3 seconds
+
+            var checkBlazor = setInterval(function () {
+                if (window.Blazor) {
+                    clearInterval(checkBlazor);
+                    Blazor.start().then(function () {
+                        var loading = document.querySelector('.loading-progress');
+                        if (loading) loading.style.display = 'none';
+                    }).catch(function (error) {
+                        var msg = error.message || "Unknown Blazor Start Error";
+                        var div = document.createElement('div');
+                        div.style.cssText = 'position:fixed; top:150px; left:0; background:purple; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+                        div.innerText = "Blazor Start Error: " + msg + "\n" + (error.stack || "");
+                        document.body.appendChild(div);
+                        console.error(error);
+                    });
+                } else {
+                    retries++;
+                    if (retries >= maxRetries) {
+                        clearInterval(checkBlazor);
+                        var div = document.createElement('div');
+                        div.style.cssText = 'position:fixed; top:200px; left:0; background:orange; color:black; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+                        div.innerText = "Critical Error: Blazor object is not defined after waiting. The framework script failed to load or initialize.";
+                        document.body.appendChild(div);
+                    }
+                }
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>
