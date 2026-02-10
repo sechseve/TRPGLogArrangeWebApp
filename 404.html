@@ -60,7 +60,8 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
-    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="_framework/blazor.webassembly.js" autostart="false"
+        onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:100px;left:0;background:red;color:white;z-index:10000;padding:10px;font-weight:bold;';d.innerText='Failed to load blazor.webassembly.js';document.body.appendChild(d);"></script>
     <script>
         window.BlazorDownloadFile = (fileName, contentType, content) => {
             const blob = new Blob([content], { type: contentType });
@@ -73,17 +74,24 @@
             URL.revokeObjectURL(url);
         }
 
-        Blazor.start().then(function () {
-            var loading = document.querySelector('.loading-progress');
-            if (loading) loading.style.display = 'none';
-        }).catch(function (error) {
-            var msg = error.message || "Unknown Blazor Start Error";
+        if (window.Blazor) {
+            Blazor.start().then(function () {
+                var loading = document.querySelector('.loading-progress');
+                if (loading) loading.style.display = 'none';
+            }).catch(function (error) {
+                var msg = error.message || "Unknown Blazor Start Error";
+                var div = document.createElement('div');
+                div.style.cssText = 'position:fixed; top:150px; left:0; background:purple; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+                div.innerText = "Blazor Start Error: " + msg + "\n" + (error.stack || "");
+                document.body.appendChild(div);
+                console.error(error);
+            });
+        } else {
             var div = document.createElement('div');
-            div.style.cssText = 'position:fixed; top:100px; left:0; background:purple; color:white; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
-            div.innerText = "Blazor Start Error: " + msg + "\n" + (error.stack || "");
+            div.style.cssText = 'position:fixed; top:200px; left:0; background:orange; color:black; z-index:10000; padding:10px; font-weight:bold; white-space:pre-wrap;';
+            div.innerText = "Critical Error: Blazor object is not defined. The framework script failed to load or initialize.";
             document.body.appendChild(div);
-            console.error(error);
-        });
+        }
     </script>
 </body>
 
