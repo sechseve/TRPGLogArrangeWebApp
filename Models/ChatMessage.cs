@@ -27,6 +27,17 @@ namespace TRPGLogArrangeTool.Blazor.Models
             }
         }
 
+        private bool _isEventImage;
+        public bool IsEventImage
+        {
+            get => _isEventImage;
+            set
+            {
+                _isEventImage = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _area;
         public string Area
         {

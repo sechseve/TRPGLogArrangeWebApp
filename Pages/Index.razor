@@ -4,10 +4,21 @@
 @inject IJSRuntime JSRuntime
 
 <PageTitle>TRPG Log Arrange Tool</PageTitle>
-
 <div class="container">
     <h1 class="my-4">TRPG Log Arrange Tool</h1>
-
+<div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            使い方
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>ログファイルをアップロードします（.html または .zip）。</li>
+                <li>「解析実行」ボタンを押します。</li>
+                <li>必要に応じて画像を編集し、「変換して保存」で保存します。</li>
+                <li style="color: red;">AIに書かせたツールです。動作確認はしましたが、正確性は担保しません。</li>
+            </ul>
+        </div>
+    </div>
     <div class="card mb-4">
         <div class="card-header">
             ログ読み込み (HTML or Zip)
@@ -80,29 +91,50 @@
 
         <div class="preview-container border rounded p-3 mb-4" style="height: 500px; overflow-y: scroll;">
              <Virtualize Items="@LogService.ChatMessageList" Context="msg">
+                 @{ var index = LogService.ChatMessageList.IndexOf(msg); }
                  <div class="chat-row mb-2 p-2 border-bottom @(IsMainArea(msg.Area) ? "" : "bg-light-gray")">
-                     <div class="d-flex">
-                         @if (IsMainArea(msg.Area) && !string.IsNullOrEmpty(msg.ImageKey))
-                         {
-                             var base64 = ImageService.GetBase64ByKey(msg.ImageKey);
-                             if (!string.IsNullOrEmpty(base64))
+                     @if (msg.IsEventImage)
+                     {
+                         <div class="text-center position-relative">
+                             @{ var base64 = ImageService.GetBase64ByKey(msg.ImageKey); }
+                             @if (!string.IsNullOrEmpty(base64))
                              {
-                                 <div class="me-2" style="width: 60px; flex-shrink: 0;">
-                                     <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd;" />
-                                 </div>
+                                 <img src="data:image/png;base64,@base64" style="max-width: 300px; height: auto; border: 2px solid #ddd; border-radius: 8px;" />
                              }
-                         }
-                         <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
-                             @msg.Name
-                             <div style="font-size: 0.8em; color: gray;">@msg.Area</div>
+                             <div class="mt-1">
+                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveMessage(msg)">この画像を削除</button>
+                             </div>
                          </div>
-                         <div class="flex-grow-1">
-                             @((MarkupString)msg.Text)
+                     }
+                     else
+                     {
+                         <div class="d-flex">
+                             @if (IsMainArea(msg.Area) && !string.IsNullOrEmpty(msg.ImageKey))
+                             {
+                                 var base64 = ImageService.GetBase64ByKey(msg.ImageKey);
+                                 if (!string.IsNullOrEmpty(base64))
+                                 {
+                                     <div class="me-2" style="width: 60px; flex-shrink: 0;">
+                                         <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd;" />
+                                     </div>
+                                 }
+                             }
+                             <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
+                                 @msg.Name
+                                 <div style="font-size: 0.8em; color: gray;">@msg.Area</div>
+                             </div>
+                             <div class="flex-grow-1">
+                                 @((MarkupString)msg.Text)
+                             </div>
                          </div>
-                     </div>
+                     }
+                 </div>
+                 <div class="text-center my-1" style="opacity: 0.5;">
+                     <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1)">＋ 画像を挿入</button>
                  </div>
              </Virtualize>
         </div>
+        <InputFile id="eventImageInput" OnChange="HandleEventImageSelected" style="display:none" />
     }
 </div>
 
@@ -220,6 +252,59 @@
         var fileName = $"chatLog{DateTime.Now:yyyyMMddHHmmss}.html";
         var fileContent = System.Text.Encoding.UTF8.GetBytes(html);
         await JSRuntime.InvokeVoidAsync("BlazorDownloadFile", fileName, "text/html", fileContent);
+    }
+
+    private int insertIndex = -1;
+
+    private async Task RequestInsertImage(int index)
+    {
+        insertIndex = index;
+        await JSRuntime.InvokeVoidAsync("HTMLElement_Click", "eventImageInput");
+    }
+
+    private async Task HandleEventImageSelected(InputFileChangeEventArgs e)
+    {
+        if (insertIndex < 0) return;
+
+        try
+        {
+            var file = e.File;
+            long maxFileSize = 1024 * 1024 * 5; // 5MB
+
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            
+            string base64 = Convert.ToBase64String(ms.ToArray());
+            string key = ImageService.GetOrAddFromBase64(base64, out _);
+
+            var eventMsg = new ChatMessage
+            {
+                IsEventImage = true,
+                ImageKey = key,
+                TimeStamp = (insertIndex > 0) ? LogService.ChatMessageList[insertIndex - 1].TimeStamp + 1 : DateTimeOffset.Now.ToUnixTimeMilliseconds()
+            };
+
+            LogService.ChatMessageList.Insert(insertIndex, eventMsg);
+            statusMessage = "画像を挿入しました";
+            statusClass = "alert-success";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"画像挿入エラー: {ex.Message}";
+            statusClass = "alert-danger";
+        }
+        finally
+        {
+            insertIndex = -1;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveMessage(ChatMessage msg)
+    {
+        LogService.ChatMessageList.Remove(msg);
+        StateHasChanged();
     }
 
     private bool IsMainArea(string area)

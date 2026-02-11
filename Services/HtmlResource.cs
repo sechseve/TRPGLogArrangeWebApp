@@ -99,6 +99,20 @@ width: 100%;
   display: block;
   margin: 12px auto;
 }
+.chatOneLine{
+ border-bottom: 0px;
+}
+.eventImage {
+  width: 100%;
+  margin: 20px 0;
+  text-align: center;
+}
+.eventImage img {
+  max-width: 90%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
 ";
 
         public const string ImageData = @"background-image: url(data:image/png;base64,{0});";
@@ -118,6 +132,7 @@ background-size: contain;
         public const string StringOtherJP = "雑談";
         public const string StringSecretEN = "secret";
         public const string StringSecretJP = "秘匿";
+        public const string EventImageRoot = @"<div class=""eventImage""><img src=""data:image/png;base64,{0}"" alt=""EventImage""></div>";
         public const string StyleEnd = @"</style>
     </head>
     <body>";
