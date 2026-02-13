@@ -415,6 +415,23 @@ namespace TRPGLogArrangeTool.Blazor.Services
 
             foreach (var writeData in ChatMessageList)
             {
+                if (writeData.IsEventImage)
+                {
+                    if (firstFlg) firstFlg = false;
+                    else if (tmpAreaName != CONST_EVENT_AREA) sb.AppendLine(HtmlResource.DivEndLine);
+
+                    tmpAreaName = CONST_EVENT_AREA;
+                    tmpUserName = string.Empty;
+                    tmpImageKey = string.Empty;
+
+                    string base64 = _imageService.GetBase64ByKey(writeData.ImageKey);
+                    if (!string.IsNullOrEmpty(base64))
+                    {
+                        sb.AppendLine(string.Format(HtmlResource.EventImageRoot, base64));
+                    }
+                    continue;
+                }
+
                 string[] nameArray = writeData.Name.Select(x => x.ToString()).ToArray();
                 string convertName = StringConvert16(nameArray);
 
