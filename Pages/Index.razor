@@ -99,7 +99,10 @@
                              @{ var base64 = ImageService.GetBase64ByKey(msg.ImageKey); }
                              @if (!string.IsNullOrEmpty(base64))
                              {
-                                 <img src="data:image/png;base64,@base64" style="max-width: 300px; height: auto; border: 2px solid #ddd; border-radius: 8px;" />
+                                 var previewStyle = msg.IsIconEventImage 
+                                     ? "max-width: 80px; width: 20%;" 
+                                     : "max-width: 300px; width: 70%;";
+                                 <img src="data:image/png;base64,@base64" style="@previewStyle height: auto; border: 2px solid #ddd; border-radius: 8px;" />
                              }
                              <div class="mt-1">
                                  <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveMessage(msg)">この画像を削除</button>
@@ -129,8 +132,11 @@
                          </div>
                      }
                  </div>
-                 <div class="text-center my-1" style="opacity: 0.5;">
-                     <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1)">＋ 画像を挿入</button>
+                 <div class="text-center my-1" style="opacity: 0.7;">
+                     <div class="btn-group">
+                         <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, false)">＋ スチル挿入(70%)</button>
+                         <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, true)">＋ アイコン挿入(20%)</button>
+                     </div>
                  </div>
              </Virtualize>
         </div>
@@ -255,10 +261,12 @@
     }
 
     private int insertIndex = -1;
+    private bool insertAsIcon = false;
 
-    private async Task RequestInsertImage(int index)
+    private async Task RequestInsertImage(int index, bool isIcon)
     {
         insertIndex = index;
+        insertAsIcon = isIcon;
         await JSRuntime.InvokeVoidAsync("HTMLElement_Click", "eventImageInput");
     }
 
@@ -281,6 +289,7 @@
             var eventMsg = new ChatMessage
             {
                 IsEventImage = true,
+                IsIconEventImage = insertAsIcon,
                 ImageKey = key,
                 TimeStamp = (insertIndex > 0) ? LogService.ChatMessageList[insertIndex - 1].TimeStamp + 1 : DateTimeOffset.Now.ToUnixTimeMilliseconds()
             };

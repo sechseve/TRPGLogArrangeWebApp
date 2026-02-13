@@ -427,7 +427,14 @@ namespace TRPGLogArrangeTool.Blazor.Services
                     string base64 = _imageService.GetBase64ByKey(writeData.ImageKey);
                     if (!string.IsNullOrEmpty(base64))
                     {
-                        sb.AppendLine(string.Format(HtmlResource.EventImageRoot, base64));
+                        if (writeData.IsIconEventImage)
+                        {
+                            sb.AppendLine(string.Format(HtmlResource.EventCharacter, base64));
+                        }
+                        else
+                        {
+                            sb.AppendLine(string.Format(HtmlResource.EventImage, base64));
+                        }
                     }
                     continue;
                 }
