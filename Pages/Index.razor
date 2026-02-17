@@ -1,4 +1,4 @@
-@page "/"
+﻿@page "/"
 @inject LogArrangeService LogService
 @inject ImageService ImageService
 @inject IJSRuntime JSRuntime
@@ -125,16 +125,28 @@
                      }
                      else
                      {
-                         <div class="d-flex">
+                         <div class="d-flex flex-grow-1 align-items-start">
                              @if (IsMainArea(msg.Area) && !string.IsNullOrEmpty(msg.ImageKey))
                              {
                                  var base64 = ImageService.GetBase64ByKey(msg.ImageKey);
                                  if (!string.IsNullOrEmpty(base64))
                                  {
-                                     <div class="me-2" style="width: 60px; flex-shrink: 0;">
-                                         <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd;" />
+                                     <div class="me-2 text-center" style="width: 70px; flex-shrink: 0;">
+                                         <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd; margin-bottom: 4px;" />
+                                         <div class="position-relative">
+                                            <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像変更</button>
+                                            <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
+                                         </div>
                                      </div>
                                  }
+                             }
+                             else if (IsMainArea(msg.Area))
+                             {
+                                 <div class="me-2 text-center" style="width: 70px; flex-shrink: 0;">
+                                     <div class="mb-1 text-muted" style="font-size: 0.7em;">画像なし</div>
+                                     <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像設定</button>
+                                     <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
+                                 </div>
                              }
                              <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
                                  @msg.Name
@@ -142,6 +154,11 @@
                              </div>
                              <div class="flex-grow-1">
                                  @((MarkupString)msg.Text)
+                             </div>
+                             <div class="ms-2" style="flex-shrink: 0;">
+                                 <button class="btn btn-sm btn-outline-danger" title="削除" @onclick="() => RemoveMessage(msg)">
+                                     ×
+                                 </button>
                              </div>
                          </div>
                      }
@@ -259,8 +276,8 @@
             string base64 = Convert.ToBase64String(ms.ToArray());
             string key = ImageService.GetOrAddFromBase64(base64, out _);
 
-            // 関連する全てのメッセージの画像を更新
-            var matchingMessages = LogService.ChatMessageList.Where(x => x.Name.Trim() == character.Name.Trim()).ToList();
+            // 関連する全てのメッセージの画像を更新（メイン・情報エリアのみ）
+            var matchingMessages = LogService.ChatMessageList.Where(x => x.Name.Trim() == character.Name.Trim() && IsMainArea(x.Area)).ToList();
             foreach (var msg in matchingMessages)
             {
                 msg.ImageKey = key;
@@ -351,12 +368,66 @@
     }
 
     /// <summary>
+    /// 個別のチャットメッセージに対して画像が選択された時の処理
+    /// </summary>
+    private async Task HandleIndividualImageSelected(InputFileChangeEventArgs e, ChatMessage msg)
+    {
+        try
+        {
+            var file = e.File;
+            long maxFileSize = 1024 * 1024 * 5; // アイコン用 5MB
+
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            
+            string base64 = Convert.ToBase64String(ms.ToArray());
+            string key = ImageService.GetOrAddFromBase64(base64, out _);
+
+            msg.ImageKey = key;
+
+            // 以降の同名キャラクターも変更するか確認（メイン・情報エリアのみ）
+            if (IsMainArea(msg.Area))
+            {
+                var confirmMessage = $"以降の「{msg.Name}」のチャット画像もすべて変更しますか？\n（メイン・情報タブのみ対象）";
+                if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+                {
+                    var index = LogService.ChatMessageList.IndexOf(msg);
+                    if (index >= 0)
+                    {
+                        var targets = LogService.ChatMessageList
+                            .Skip(index + 1)
+                            .Where(x => x.Name == msg.Name && IsMainArea(x.Area));
+                        foreach (var target in targets)
+                        {
+                            target.ImageKey = key;
+                        }
+                    }
+                }
+            }
+
+            statusMessage = "画像の変更を適用しました";
+            statusClass = "alert-success";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"画像読み込みエラー: {ex.Message}";
+            statusClass = "alert-danger";
+        }
+    }
+
+    /// <summary>
     /// メッセージ（画像など）を削除します
     /// </summary>
-    private void RemoveMessage(ChatMessage msg)
+    private async Task RemoveMessage(ChatMessage msg)
     {
-        LogService.ChatMessageList.Remove(msg);
-        StateHasChanged();
+        var confirmMsg = msg.IsEventImage ? "この画像を削除してよろしいですか？" : "このメッセージを削除してよろしいですか？";
+        if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMsg))
+        {
+            LogService.ChatMessageList.Remove(msg);
+            StateHasChanged();
+        }
     }
 
     /// <summary>
