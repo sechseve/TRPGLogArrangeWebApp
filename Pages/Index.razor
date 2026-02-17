@@ -68,27 +68,29 @@
             <div class="card-header">
                 キャラクター画像設定 (HTML読み込み用)
             </div>
-            <ul class="list-group list-group-flush">
-                @foreach (var character in LogService.ChatNameList.Where(x => x.Name != "EVENT_IMAGE" && x.Name != "EVENT_CHARACTER_IMAGE"))
-                {
-                    <li class="list-group-item d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center flex-grow-1">
-                            @if (!string.IsNullOrEmpty(character.DefaultImageKey))
-                            {
-                                var base64 = ImageService.GetBase64ByKey(character.DefaultImageKey);
-                                if (!string.IsNullOrEmpty(base64))
+            <div style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    @foreach (var character in LogService.ChatNameList.Where(x => x.Name != "EVENT_IMAGE" && x.Name != "EVENT_CHARACTER_IMAGE"))
+                    {
+                        <li class="list-group-item d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                @if (!string.IsNullOrEmpty(character.DefaultImageKey))
                                 {
-                                    <img src="data:image/png;base64,@base64" style="width: 40px; height: 40px; object-fit: contain; margin-right: 10px; border: 1px solid #ddd;" />
+                                    var base64 = ImageService.GetBase64ByKey(character.DefaultImageKey);
+                                    if (!string.IsNullOrEmpty(base64))
+                                    {
+                                        <img src="data:image/png;base64,@base64" style="width: 40px; height: 40px; object-fit: contain; margin-right: 10px; border: 1px solid #ddd;" />
+                                    }
                                 }
-                            }
-                            <span class="text-truncate" style="max-width: 150px;">@character.Name</span>
-                        </div>
-                        <div style="width: 200px; flex-shrink: 0;">
-                            <InputFile OnChange="@(e => HandleCharacterImageSelected(e, character))" class="form-control form-control-sm" accept=".png,.jpg,.jpeg" />
-                        </div>
-                    </li>
-                }
-            </ul>
+                                <span class="text-truncate" style="max-width: 150px;">@character.Name</span>
+                            </div>
+                            <div style="width: 200px; flex-shrink: 0;">
+                                <InputFile OnChange="@(e => HandleCharacterImageSelected(e, character))" class="form-control form-control-sm" accept=".png,.jpg,.jpeg" />
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
         </div>
     }
 
