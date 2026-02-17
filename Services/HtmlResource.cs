@@ -1,7 +1,13 @@
 namespace TRPGLogArrangeTool.Blazor.Services
 {
+    /// <summary>
+    /// HTML出力やプレビュー表示に使用されるHTML/CSSテンプレート等を保持する静的クラス
+    /// </summary>
     public static class HtmlResource
     {
+        /// <summary>
+        /// チャットの各キャラクターごとの文字色を指定するCSSスタイル
+        /// </summary>
         public const string ChatColor = @".chat.{0} .chatOneLine,.chat.{0} 
 span{{
  color: {1} ; 

@@ -28,10 +28,13 @@
 </div>
 
 @code {
+    /// <summary>ナビゲーションメニューを折りたたむかどうかのフラグ</summary>
     private bool collapseNavMenu = true;
 
+    /// <summary>メニューの表示状態に応じたCSSクラスを返します</summary>
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    /// <summary>メニューの開閉状態を切り替えます</summary>
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;

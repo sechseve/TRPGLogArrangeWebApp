@@ -11,14 +11,35 @@ using TRPGLogArrangeTool.Blazor.Models;
 
 namespace TRPGLogArrangeTool.Blazor.Services
 {
+    /// <summary>
+    /// ログ解析結果を保持するクラス
+    /// </summary>
     public class LogArrangeResult
     {
+        /// <summary>
+        /// 解析が成功したかどうか
+        /// </summary>
         public bool Success { get; set; }
+
+        /// <summary>
+        /// 実行結果に関するメッセージ、またはエラーメッセージ
+        /// </summary>
         public string Message { get; set; }
+
+        /// <summary>
+        /// 生成されたHTMLコンテンツ
+        /// </summary>
         public string HtmlContent { get; set; }
+
+        /// <summary>
+        /// 発生した個別エラー（画像読み込み失敗など）のリスト
+        /// </summary>
         public List<string> ErrorMessages { get; set; } = new List<string>();
     }
 
+    /// <summary>
+    /// TRPGのチャットログを解析・整形するメインサービス
+    /// </summary>
     public class LogArrangeService
     {
         private const string CONST_EVENT_AREA = "EVENT";
@@ -32,7 +53,14 @@ namespace TRPGLogArrangeTool.Blazor.Services
 
         private readonly ImageService _imageService;
 
+        /// <summary>
+        /// 解析によって抽出されたキャラクター名のリスト
+        /// </summary>
         public List<ChatName> ChatNameList { get; private set; } = new List<ChatName>();
+
+        /// <summary>
+        /// 解析によって抽出されたメッセージのリスト
+        /// </summary>
         public List<ChatMessage> ChatMessageList { get; private set; } = new List<ChatMessage>();
 
         public LogArrangeService(ImageService imageService)
@@ -40,6 +68,9 @@ namespace TRPGLogArrangeTool.Blazor.Services
             _imageService = imageService;
         }
 
+        /// <summary>
+        /// 保持している解析データを初期化します
+        /// </summary>
         public void ClearData()
         {
             ChatNameList.Clear();
@@ -49,6 +80,11 @@ namespace TRPGLogArrangeTool.Blazor.Services
             ChatNameList.Add(new ChatName() { Name = NAME_EVENT_CHARACTER });
         }
 
+        /// <summary>
+        /// HTML形式のログを解析します
+        /// </summary>
+        /// <param name="htmlContent">HTMLの文字列</param>
+        /// <returns>解析結果</returns>
         public LogArrangeResult HtmlAnalyze(string htmlContent)
         {
             ClearData();
@@ -59,7 +95,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                 doc.LoadHtml(htmlContent);
 
                 var ps = doc.DocumentNode.SelectNodes("//p");
-                if (ps == null) return new LogArrangeResult { Success = false, Message = "No paragraph tags found." };
+                if (ps == null) return new LogArrangeResult { Success = false, Message = "段落タグ (p) が見つかりませんでした。" };
 
                 for (int i = 0; i < ps.Count; i++)
                 {
@@ -130,14 +166,20 @@ namespace TRPGLogArrangeTool.Blazor.Services
         }
 
 
+        /// <summary>
+        /// Zip形式のユドナリウムログを非同期で解析します
+        /// </summary>
+        /// <param name="zipStream">Zipファイルのストリーム</param>
+        /// <param name="detailCheck">画像の詳細解析を行うかどうか</param>
+        /// <param name="standCheck">キャラクターの立ち絵情報を読み込むかどうか</param>
+        /// <returns>解析結果</returns>
         public async Task<LogArrangeResult> ZipAnalyzeAsync(Stream zipStream, bool detailCheck, bool standCheck)
         {
             ClearData();
             bool flyFlg = false;
             string targetPath = "";
             
-            // Need to allow seeking for ZipArchive if we want to check multiple files (which requires iterating entries)
-            // or we copy to memory stream.
+            // ZipArchiveのエントリを複数回走査するためにメモリストリームにコピーします。
             using (var memoryStream = new MemoryStream())
             {
                 await zipStream.CopyToAsync(memoryStream);
@@ -156,28 +198,33 @@ namespace TRPGLogArrangeTool.Blazor.Services
                     }
                     else
                     {
-                        return new LogArrangeResult { Success = false, Message = "Target XML not found in zip." };
+                        return new LogArrangeResult { Success = false, Message = "Zip内に解析対象のXMLが見つかりませんでした。" };
                     }
                 }
                 
-                // Re-open/Keep open? We can reuse memoryStream if we are careful.
                 memoryStream.Position = 0;
                 using (ZipArchive archive = new ZipArchive(memoryStream, ZipArchiveMode.Read, true))
                 {
                     string xmlContent = ExtractXmlFromZip(archive, targetPath);
-                    if (xmlContent == null) return new LogArrangeResult { Success = false, Message = "Failed to extract XML." };
+                    if (xmlContent == null) return new LogArrangeResult { Success = false, Message = "XMLの抽出に失敗しました。" };
                     
-                    // ParseChatMessages needs the archive to extract images
+                    // チャットメッセージをパース（画像の抽出も含む）
                     return ParseChatMessages(xmlContent, archive, flyFlg, detailCheck);
                 }
             }
         }
 
+        /// <summary>
+        /// Zip内に指定されたファイル名が存在するか確認します
+        /// </summary>
         private bool CheckFlyBasic(ZipArchive archive, string fileName)
         {
             return archive.Entries.Any(entry => entry.Name.Equals(fileName, StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>
+        /// Zipから指定されたXMLファイルを文字列として抽出します
+        /// </summary>
         private string ExtractXmlFromZip(ZipArchive archive, string fileName)
         {
              foreach (ZipArchiveEntry entry in archive.Entries)
@@ -193,6 +240,9 @@ namespace TRPGLogArrangeTool.Blazor.Services
              return null;
         }
 
+        /// <summary>
+        /// XML文字列からチャットメッセージをパースし、画像を抽出します
+        /// </summary>
         private LogArrangeResult ParseChatMessages(string xmlString, ZipArchive archive, bool flyFlg, bool detailCheck)
         {
             List<ChatMessage> tmpMessageList = new List<ChatMessage>();
@@ -234,7 +284,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                         }
                     }
 
-                    if (chatElement.Attribute("to")?.Value != null) continue; // Skip secret
+                    if (chatElement.Attribute("to")?.Value != null) continue; // 秘匿はスキップ
 
                     var chatName = ChatNameList.FirstOrDefault(x => x.Name == name);
                     if (chatName == null)
@@ -243,7 +293,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                         ChatNameList.Add(chatName);
                     }
 
-                    // For non-detail analysis, use only the first image encountered for this character to reduce output size.
+                    // 詳細解析でない場合は、出力サイズを抑えるためにそのキャラクターで最初に現れた画像のみを使用します。
                     if (!detailCheck && !string.IsNullOrEmpty(chatName.DefaultImageKey))
                     {
                         imageIdentifier = chatName.DefaultImageKey;
@@ -265,7 +315,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                 }
             }
 
-            // Extract Images
+            // 画像の抽出
             foreach (var entry in archive.Entries)
             {
                 string nameWithoutExt = Path.GetFileNameWithoutExtension(entry.Name);
@@ -278,17 +328,8 @@ namespace TRPGLogArrangeTool.Blazor.Services
                     var matchingMessages = tmpMessageList.Where(x => x.ImageKey == nameWithoutExt).ToList();
                     if (matchingMessages.Count == 0 && !ChatNameList.Any(cn => cn.DefaultImageKey == nameWithoutExt))
                     {
-                         // Also check if any stands use this image, although basic logic matches message image key
-                         // Optimization: only load if used
-                         // For now, following logic: if msg has it.
-                         // But wait, stand logic replaced imageIdentifier in tmpMessageList with the stand image name?
-                         // If imageIdentifier was replaced by actual filename (without ext), then yes.
-                         // Let's stick to original logic:
-                         if (matchingMessages.Count == 0) continue;
+                          if (matchingMessages.Count == 0) continue;
                     }
-                    
-                    // Actually, we should load images that are used.
-                    // The logic above: matchingMessages = tmpMessageList.Where(...)
                     
                     if (matchingMessages.Count == 0) continue;
 
@@ -327,6 +368,9 @@ namespace TRPGLogArrangeTool.Blazor.Services
             return result;
         }
 
+        /// <summary>
+        /// Zip内の fly_data.xml からキャラクターの立ち絵情報のリストを作成します
+        /// </summary>
         private List<CharacterStandInfo> StandListCreate(ZipArchive archive)
         {
             List<CharacterStandInfo> characterStandList = new List<CharacterStandInfo>();
@@ -379,6 +423,10 @@ namespace TRPGLogArrangeTool.Blazor.Services
             return characterStandList;
         }
 
+        /// <summary>
+        /// 現在保持しているデータからHTML文字列を生成します
+        /// </summary>
+        /// <returns>生成されたHTML</returns>
         public string ConvertWrite()
         {
             StringBuilder sb = new StringBuilder();
@@ -395,7 +443,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                 var base64 = _imageService.GetBase64ByKey(key);
                 if (base64 == null) continue;
                 
-                sb.AppendLine(string.Format(HtmlResource.ImageHeader, key)); // key is hash, safe for CSS class? Yes usually alphanumeric.
+                sb.AppendLine(string.Format(HtmlResource.ImageHeader, key));
                 sb.AppendLine(string.Format(HtmlResource.ImageData, base64));
                 sb.AppendLine(HtmlResource.Imagefooter);
             }
@@ -484,7 +532,7 @@ namespace TRPGLogArrangeTool.Blazor.Services
                     string areaNameCheck = writeData.Area;
                     if (areaNameCheck == HtmlResource.StringOtherEN) areaNameCheck = HtmlResource.StringOtherJP;
 
-                    if (tmpUserName != writeData.Name || tmpAreaName != areaNameCheck) // Logic adjustment: combined Name check and Area check
+                    if (tmpUserName != writeData.Name || tmpAreaName != areaNameCheck)
                     {
                          if(tmpUserName != writeData.Name)
                          {
@@ -503,7 +551,6 @@ namespace TRPGLogArrangeTool.Blazor.Services
                          }
                          else if (tmpAreaName != areaNameCheck)
                          {
-                              // Same logic as above basically, original code had slight duplication
                               tmpUserName = writeData.Name;
                               tmpImageKey = string.Empty;
                               tmpAreaName = areaNameCheck;
@@ -522,11 +569,17 @@ namespace TRPGLogArrangeTool.Blazor.Services
             return sb.ToString();
         }
 
+        /// <summary>
+        /// テキストに対しルビ変換や装飾変換を適用します
+        /// </summary>
         private string TextHtmlEmbellishment(string input)
         {
             return EmbellishmentConverter(RubyElementConvert(input));
         }
 
+        /// <summary>
+        /// |ベース《ルビ》 形式の文字列を ruby タグに変換します
+        /// </summary>
         private string RubyElementConvert(string input)
         {
             bool hasPipe = input.Contains("|") || input.Contains("｜");
@@ -554,9 +607,11 @@ namespace TRPGLogArrangeTool.Blazor.Services
             return matchCount > 0 ? result.ToString() : input;
         }
 
+        /// <summary>
+        /// 特殊記号（~~~, ###）による装飾や改行をHTMLタグに変換し、不要な空白や改行をトリムします
+        /// </summary>
         private string EmbellishmentConverter(string input)
         {
-             // Simplified loop using Regex for replacement of repeated trims if possible, but stuck to original logic mostly
             while (true)
             {
                 string oldInput = input;
@@ -575,11 +630,17 @@ namespace TRPGLogArrangeTool.Blazor.Services
             return input;
         }
 
+        /// <summary>
+        /// 名前から空白を除去します
+        /// </summary>
         private string NameConverter(string input)
         {
             return input.Replace(" ", "").Replace("　", "");
         }
 
+        /// <summary>
+        /// 文字列を16進数のハッシュ風文字列に変換します。主にCSSのクラス名として利用されます。
+        /// </summary>
         private string StringConvert16(string[] args)
         {
             string returnData = "name";

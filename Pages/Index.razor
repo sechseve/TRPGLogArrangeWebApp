@@ -157,13 +157,22 @@
 </div>
 
 @code {
+    /// <summary>画面に表示するステータスメッセージ</summary>
     private string statusMessage;
+    /// <summary>ステータスメッセージのCSSクラス（alert-success など）</summary>
     private string statusClass;
+    /// <summary>詳細解析を行うかどうかのフラグ</summary>
     private bool detailAnalysis = false;
+    /// <summary>選択された入力ファイル</summary>
     private IBrowserFile? selectedFile;
+    /// <summary>現在解析中かどうか</summary>
     private bool isAnalyzing = false;
+    /// <summary>最後に解析したファイル形式（"HTML" or "ZIP"）</summary>
     private string lastAnalyzedFileType = string.Empty;
 
+    /// <summary>
+    /// ファイルが選択された時の処理
+    /// </summary>
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         selectedFile = e.File;
@@ -171,6 +180,9 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// 解析処理を実行します
+    /// </summary>
     private async Task ExecuteAnalysis()
     {
         if (selectedFile == null) return;
@@ -228,12 +240,15 @@
         }
     }
 
+    /// <summary>
+    /// 各キャラクターの画像が選択された時の処理
+    /// </summary>
     private async Task HandleCharacterImageSelected(InputFileChangeEventArgs e, ChatName character)
     {
         try
         {
             var file = e.File;
-            long maxFileSize = 1024 * 1024 * 5; // 5MB for icons
+            long maxFileSize = 1024 * 1024 * 5; // アイコン用 5MB
 
             using var stream = file.OpenReadStream(maxFileSize);
             using var ms = new MemoryStream();
@@ -242,14 +257,14 @@
             string base64 = Convert.ToBase64String(ms.ToArray());
             string key = ImageService.GetOrAddFromBase64(base64, out _);
 
-            // Update all related messages
+            // 関連する全てのメッセージの画像を更新
             var matchingMessages = LogService.ChatMessageList.Where(x => x.Name.Trim() == character.Name.Trim()).ToList();
             foreach (var msg in matchingMessages)
             {
                 msg.ImageKey = key;
             }
 
-            // Update character definition
+            // キャラクター定義を更新
             character.DefaultImageKey = key;
             if (!character.ImageKeys.Contains(key)) character.ImageKeys.Add(key);
 
@@ -264,6 +279,9 @@
         }
     }
 
+    /// <summary>
+    /// 生成されたHTMLをダウンロードします
+    /// </summary>
     private async Task DownloadHtml()
     {
         var html = LogService.ConvertWrite();
@@ -275,6 +293,11 @@
     private int insertIndex = -1;
     private bool insertAsIcon = false;
 
+    /// <summary>
+    /// 画像挿入（イベントスチル）を要求します
+    /// </summary>
+    /// <param name="index">挿入先のインデックス</param>
+    /// <param name="isIcon">アイコンとして挿入するかどうか</param>
     private async Task RequestInsertImage(int index, bool isIcon)
     {
         insertIndex = index;
@@ -282,6 +305,9 @@
         await JSRuntime.InvokeVoidAsync("HTMLElement_Click", "eventImageInput");
     }
 
+    /// <summary>
+    /// イベント画像が選択された時の処理
+    /// </summary>
     private async Task HandleEventImageSelected(InputFileChangeEventArgs e)
     {
         if (insertIndex < 0) return;
@@ -322,12 +348,18 @@
         }
     }
 
+    /// <summary>
+    /// メッセージ（画像など）を削除します
+    /// </summary>
     private void RemoveMessage(ChatMessage msg)
     {
         LogService.ChatMessageList.Remove(msg);
         StateHasChanged();
     }
 
+    /// <summary>
+    /// 指定されたタブ（エリア）がメイン扱いかどうかを判定します
+    /// </summary>
     private bool IsMainArea(string area)
     {
         return area == "メイン" || area == "main" || area == "情報" || area == "info";
