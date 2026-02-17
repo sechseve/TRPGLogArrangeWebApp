@@ -41,15 +41,23 @@
                 @if (selectedFile != null)
                 {
                     <div class="mt-2 text-muted">選択中: @selectedFile.Name (@(selectedFile.Size / 1024) KB)</div>
-                    @if (selectedFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <div class="mt-2">
+                    <div class="mt-2">
+                        @if (selectedFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" @bind="reflectStand" class="form-check-input me-2" />
+                                    スタンド設定反映 (ZIP 読み込み時に立ち絵情報を反映する)
+                                </label>
+                            </div>
+                        }
+                        <div class="form-check">
                             <label class="form-check-label">
-                                <input type="checkbox" @bind="detailAnalysis" class="form-check-input me-2" />
-                                詳細解析 (ZIP 読み込み時に立ち絵情報を反映する)
+                                <input type="checkbox" @bind="allowDetailedChanges" class="form-check-input me-2" />
+                                詳細変更 (個別画像の変更、削除、画像挿入を許可する)
                             </label>
                         </div>
-                    }
+                    </div>
                 }
             </div>
             <button class="btn btn-success w-100" @onclick="ExecuteAnalysis" disabled="@(selectedFile == null || isAnalyzing)">
@@ -118,9 +126,12 @@
                                      : "max-width: 300px; width: 70%;";
                                  <img src="data:image/png;base64,@base64" style="@previewStyle height: auto; border: 2px solid #ddd; border-radius: 8px;" />
                              }
-                             <div class="mt-1">
-                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveMessage(msg)">この画像を削除</button>
-                             </div>
+                             @if (isEditMode)
+                             {
+                                 <div class="mt-1">
+                                     <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveMessage(msg)">この画像を削除</button>
+                                 </div>
+                             }
                          </div>
                      }
                      else
@@ -133,20 +144,26 @@
                                  {
                                      <div class="me-2 text-center" style="width: 70px; flex-shrink: 0;">
                                          <img src="data:image/png;base64,@base64" style="max-width: 100%; height: auto; border: 1px solid #ddd; margin-bottom: 4px;" />
-                                         <div class="position-relative">
-                                            <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像変更</button>
-                                            <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
-                                         </div>
+                                         @if (isEditMode)
+                                         {
+                                             <div class="position-relative">
+                                                <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像変更</button>
+                                                <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
+                                             </div>
+                                         }
                                      </div>
                                  }
                              }
                              else if (IsMainArea(msg.Area))
                              {
-                                 <div class="me-2 text-center" style="width: 70px; flex-shrink: 0;">
-                                     <div class="mb-1 text-muted" style="font-size: 0.7em;">画像なし</div>
-                                     <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像設定</button>
-                                     <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
-                                 </div>
+                                 @if (isEditMode)
+                                 {
+                                     <div class="me-2 text-center" style="width: 70px; flex-shrink: 0;">
+                                         <div class="mb-1 text-muted" style="font-size: 0.7em;">画像なし</div>
+                                         <button class="btn btn-sm btn-outline-secondary p-0" style="font-size: 0.7em; width: 100%;" @onclick='() => JSRuntime.InvokeVoidAsync("HTMLElement_Click", $"fileInput-{index}")'>画像設定</button>
+                                         <InputFile id='@($"fileInput-{index}")' OnChange="@(e => HandleIndividualImageSelected(e, msg))" style="display:none" accept=".png,.jpg,.jpeg" />
+                                     </div>
+                                 }
                              }
                              <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
                                  @msg.Name
@@ -155,20 +172,26 @@
                              <div class="flex-grow-1">
                                  @((MarkupString)msg.Text)
                              </div>
-                             <div class="ms-2" style="flex-shrink: 0;">
-                                 <button class="btn btn-sm btn-outline-danger" title="削除" @onclick="() => RemoveMessage(msg)">
-                                     ×
-                                 </button>
-                             </div>
+                             @if (isEditMode)
+                             {
+                                 <div class="ms-2" style="flex-shrink: 0;">
+                                     <button class="btn btn-sm btn-outline-danger" title="削除" @onclick="() => RemoveMessage(msg)">
+                                         ×
+                                     </button>
+                                 </div>
+                             }
                          </div>
                      }
                  </div>
-                 <div class="text-center my-1" style="opacity: 0.7;">
-                     <div class="btn-group">
-                         <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, false)">＋ イベントスチル挿入</button>
-                         <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, true)">＋ イベント立ち絵スチル挿入</button>
+                 @if (isEditMode)
+                 {
+                     <div class="text-center my-1" style="opacity: 0.7;">
+                         <div class="btn-group">
+                             <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, false)">＋ イベントスチル挿入</button>
+                             <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, true)">＋ イベント立ち絵スチル挿入</button>
+                         </div>
                      </div>
-                 </div>
+                 }
              </Virtualize>
         </div>
         <InputFile id="eventImageInput" OnChange="HandleEventImageSelected" style="display:none" />
@@ -180,8 +203,12 @@
     private string statusMessage;
     /// <summary>ステータスメッセージのCSSクラス（alert-success など）</summary>
     private string statusClass;
-    /// <summary>詳細解析を行うかどうかのフラグ</summary>
-    private bool detailAnalysis = false;
+    /// <summary>スタンド設定を反映するかどうかのフラグ</summary>
+    private bool reflectStand = false;
+    /// <summary>詳細変更を許可するかどうかのフラグ（UI用設定値）</summary>
+    private bool allowDetailedChanges = false;
+    /// <summary>現在のプレビューが詳細編集モード（画像の変更、削除等）かどうか</summary>
+    private bool isEditMode = false;
     /// <summary>選択された入力ファイル</summary>
     private IBrowserFile? selectedFile;
     /// <summary>現在解析中かどうか</summary>
@@ -220,7 +247,7 @@
             {
                 lastAnalyzedFileType = "ZIP";
                 using var stream = selectedFile.OpenReadStream(maxFileSize);
-                result = await LogService.ZipAnalyzeAsync(stream, detailAnalysis, detailAnalysis);
+                result = await LogService.ZipAnalyzeAsync(stream, reflectStand, reflectStand);
             }
             else
             {
@@ -233,6 +260,7 @@
 
             if (result.Success)
             {
+                isEditMode = allowDetailedChanges; // 解析成功時に現在設定をプレビューモードに反映
                 statusMessage = $"解析成功: {LogService.ChatMessageList.Count} 件のメッセージ";
                 statusClass = "alert-success";
                 if (result.ErrorMessages.Any())
