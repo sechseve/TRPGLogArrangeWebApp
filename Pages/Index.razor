@@ -112,9 +112,9 @@
         </div>
 
         <div class="preview-container border rounded p-3 mb-4" style="height: 500px; overflow-y: scroll;">
-             <Virtualize Items="@LogService.ChatMessageList" Context="msg">
+             <Virtualize Items="@LogService.ChatMessageList" Context="msg" ItemSize="60" OverscanCount="10">
                  @{ var index = LogService.ChatMessageList.IndexOf(msg); }
-                 <div class="chat-row mb-2 p-2 border-bottom @(IsMainArea(msg.Area) ? "" : "bg-light-gray")">
+                 <div class="chat-row mb-2 p-2 border-bottom @(IsMainArea(msg.Area) ? "" : "bg-light-gray")" style="min-height: 40px;">
                      @if (msg.IsEventImage)
                      {
                          <div class="text-center position-relative">
