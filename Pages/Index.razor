@@ -165,11 +165,11 @@
                                      </div>
                                  }
                              }
-                             <div class="me-2" style="width: 120px; font-weight: bold; flex-shrink: 0;">
+                             <div class="chat-name me-2">
                                  @msg.Name
-                                 <div style="font-size: 0.8em; color: gray;">@msg.Area</div>
+                                 <div class="chat-area">@msg.Area</div>
                              </div>
-                             <div class="flex-grow-1">
+                             <div class="chat-text flex-grow-1">
                                  @((MarkupString)msg.Text)
                              </div>
                              @if (isEditMode)
