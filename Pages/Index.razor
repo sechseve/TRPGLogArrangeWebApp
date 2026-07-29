@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @inject LogArrangeService LogService
 @inject ImageService ImageService
 @inject IJSRuntime JSRuntime
@@ -54,7 +54,19 @@
                         <div class="form-check">
                             <label class="form-check-label">
                                 <input type="checkbox" @bind="allowDetailedChanges" class="form-check-input me-2" />
-                                詳細変更 (個別画像の変更、削除、画像挿入を許可する)
+                                詳細変更 (個別画像の変更、削除を許可する)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input type="checkbox" @bind="allowInsertEventStill" class="form-check-input me-2" />
+                                イベントスチルの挿入を許可する
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input type="checkbox" @bind="allowInsertStandStill" class="form-check-input me-2" />
+                                イベント立ち絵スチルの挿入を許可する
                             </label>
                         </div>
                     </div>
@@ -183,12 +195,18 @@
                          </div>
                      }
                  </div>
-                 @if (isEditMode)
+                 @if (isCanInsertEventStill || isCanInsertStandStill)
                  {
                      <div class="text-center my-1" style="opacity: 0.7;">
                          <div class="btn-group">
-                             <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, false)">＋ イベントスチル挿入</button>
-                             <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, true)">＋ イベント立ち絵スチル挿入</button>
+                             @if (isCanInsertEventStill)
+                             {
+                                 <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, false)">＋ イベントスチル挿入</button>
+                             }
+                             @if (isCanInsertStandStill)
+                             {
+                                 <button class="btn btn-sm btn-light border" @onclick="() => RequestInsertImage(index + 1, true)">＋ イベント立ち絵スチル挿入</button>
+                             }
                          </div>
                      </div>
                  }
@@ -207,8 +225,16 @@
     private bool reflectStand = false;
     /// <summary>詳細変更を許可するかどうかのフラグ（UI用設定値）</summary>
     private bool allowDetailedChanges = false;
+    /// <summary>イベントスチル挿入を許可するかどうかのフラグ（UI用設定値）</summary>
+    private bool allowInsertEventStill = false;
+    /// <summary>イベント立ち絵スチル挿入を許可するかどうかのフラグ（UI用設定値）</summary>
+    private bool allowInsertStandStill = false;
     /// <summary>現在のプレビューが詳細編集モード（画像の変更、削除等）かどうか</summary>
     private bool isEditMode = false;
+    /// <summary>現在のプレビューでイベントスチルの挿入が許可されているかどうか</summary>
+    private bool isCanInsertEventStill = false;
+    /// <summary>現在のプレビューでイベント立ち絵スチルの挿入が許可されているかどうか</summary>
+    private bool isCanInsertStandStill = false;
     /// <summary>選択された入力ファイル</summary>
     private IBrowserFile? selectedFile;
     /// <summary>現在解析中かどうか</summary>
@@ -261,6 +287,8 @@
             if (result.Success)
             {
                 isEditMode = allowDetailedChanges; // 解析成功時に現在設定をプレビューモードに反映
+                isCanInsertEventStill = allowInsertEventStill;
+                isCanInsertStandStill = allowInsertStandStill;
                 statusMessage = $"解析成功: {LogService.ChatMessageList.Count} 件のメッセージ";
                 statusClass = "alert-success";
                 if (result.ErrorMessages.Any())
